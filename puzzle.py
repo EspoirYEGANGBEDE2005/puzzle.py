@@ -1,7 +1,7 @@
- # puzzle.py
+# Cellule 1: Imports et Définitions de Fonctions
 
-from aima.search import Problem, breadth_first_tree_search
-import sys
+from aima.search import Problem, breadth_first_tree_search, depth_first_tree_search, uniform_cost_search, astar_search
+import time
 
 class PuzzleProblem(Problem):
     def __init__(self, initial, goal):
@@ -10,7 +10,6 @@ class PuzzleProblem(Problem):
         self.goal = goal
 
     def actions(self, state):
-        # Définir les actions possibles (mouvements glissants)
         actions = []
         for i in range(len(state)):
             for j in range(len(state[i])):
@@ -22,7 +21,6 @@ class PuzzleProblem(Problem):
         return actions
 
     def result(self, state, action):
-        # Appliquer l'action à l'état actuel et retourner le nouvel état
         new_state = [row[:] for row in state]
         direction, (i, j) = action
         if direction == 'up':
@@ -36,38 +34,72 @@ class PuzzleProblem(Problem):
         return new_state
 
     def goal_test(self, state):
-        # Vérifier si l'état actuel est l'état cible
         return state == self.goal
 
     def path_cost(self, c, state1, action, state2):
-        # Retourner le coût du chemin
         return c + 1
 
 def read_file(filename):
     with open(filename, 'r') as file:
         return [line.strip().split() for line in file]
 
-def main(init_file, goal_file):
+def run_experiment(init_file, goal_file, search_function):
     initial = read_file(init_file)
     goal = read_file(goal_file)
     problem = PuzzleProblem(initial, goal)
 
-    # Choisir une stratégie de recherche
-    solution = breadth_first_tree_search(problem)
+    start_time = time.time()
+    solution = search_function(problem)
+    end_time = time.time()
 
-    # Afficher la solution
     if solution:
-        for state in solution.path():
-            for row in state.state:
-                print(' '.join(row))
-            print()
+        path = solution.path()
+        steps = len(path) - 1
+        nodes_explored = solution.path_cost
+        return {
+            "time": end_time - start_time,
+            "nodes_explored": nodes_explored,
+            "steps": steps,
+            "path": path
+        }
     else:
-        print("No solution found.")
+        return {
+            "time": end_time - start_time,
+            "nodes_explored": "N/A",
+            "steps": "N/A",
+            "path": []
+        }
 
-if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python puzzle.py <init_file> <goal_file>")
-    else:
-        init_file = sys.argv[1]
-        goal_file = sys.argv[2]
-        main(init_file, goal_file)
+# Cellule 2: Définir les Fichiers d'Initialisation et de But
+
+init_files = ["init1.txt", "init2.txt", "init3.txt", "init4.txt", "init5.txt",
+              "init6.txt", "init7.txt", "init8.txt", "init9.txt", "init10.txt"]
+goal_files = ["goal1.txt", "goal2.txt", "goal3.txt", "goal4.txt", "goal5.txt",
+              "goal6.txt", "goal7.txt", "goal8.txt", "goal9.txt", "goal10.txt"]
+
+# Cellule 3: Exécuter les Expérimentations
+
+search_functions = [breadth_first_tree_search, depth_first_tree_search, uniform_cost_search, astar_search]
+results = {}
+
+for search_function in search_functions:
+    search_name = search_function.__name__
+    results[search_name] = []
+    for init_file, goal_file in zip(init_files, goal_files):
+        result = run_experiment(init_file, goal_file, search_function)
+        results[search_name].append(result)
+
+# Cellule 4: Afficher les Résultats
+
+for search_name, search_results in results.items():
+    print(f"Résultats pour {search_name}:")
+    for i, result in enumerate(search_results):
+        print(f"Instance {i+1}: Temps = {result['time']}, Nœuds explorés = {result['nodes_explored']}, Étapes = {result['steps']}")
+        if result['path']:
+            for state in result['path']:
+                for row in state.state:
+                    print(' '.join(row))
+                print()
+        else:
+            print("No solution found.")
+        print()
