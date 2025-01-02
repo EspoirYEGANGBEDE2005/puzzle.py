@@ -1,6 +1,6 @@
-# puzzle.py
+ # puzzle.py
 
-from aima.search import Problem, Node, breadth_first_tree_search, depth_first_tree_search, uniform_cost_search, astar_search
+from aima.search import Problem, breadth_first_tree_search
 import sys
 
 class PuzzleProblem(Problem):
@@ -12,13 +12,27 @@ class PuzzleProblem(Problem):
     def actions(self, state):
         # Définir les actions possibles (mouvements glissants)
         actions = []
-        # Ajouter les actions possibles en fonction de l'état actuel
+        for i in range(len(state)):
+            for j in range(len(state[i])):
+                if state[i][j] == '0':
+                    if i > 0: actions.append(('up', (i, j)))
+                    if i < len(state) - 1: actions.append(('down', (i, j)))
+                    if j > 0: actions.append(('left', (i, j)))
+                    if j < len(state[i]) - 1: actions.append(('right', (i, j)))
         return actions
 
     def result(self, state, action):
         # Appliquer l'action à l'état actuel et retourner le nouvel état
-        new_state = state.copy()
-        # Mettre à jour new_state en fonction de l'action
+        new_state = [row[:] for row in state]
+        direction, (i, j) = action
+        if direction == 'up':
+            new_state[i][j], new_state[i-1][j] = new_state[i-1][j], new_state[i][j]
+        elif direction == 'down':
+            new_state[i][j], new_state[i+1][j] = new_state[i+1][j], new_state[i][j]
+        elif direction == 'left':
+            new_state[i][j], new_state[i][j-1] = new_state[i][j-1], new_state[i][j]
+        elif direction == 'right':
+            new_state[i][j], new_state[i][j+1] = new_state[i][j+1], new_state[i][j]
         return new_state
 
     def goal_test(self, state):
@@ -28,10 +42,6 @@ class PuzzleProblem(Problem):
     def path_cost(self, c, state1, action, state2):
         # Retourner le coût du chemin
         return c + 1
-
-    def h(self, node):
-        # Heuristique pour l'algorithme A*
-        return 0  # Par défaut, utiliser une heuristique nulle
 
 def read_file(filename):
     with open(filename, 'r') as file:
@@ -46,10 +56,13 @@ def main(init_file, goal_file):
     solution = breadth_first_tree_search(problem)
 
     # Afficher la solution
-    for state in solution.path():
-        for row in state.state:
-            print(' '.join(row))
-        print()
+    if solution:
+        for state in solution.path():
+            for row in state.state:
+                print(' '.join(row))
+            print()
+    else:
+        print("No solution found.")
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
